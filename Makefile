@@ -19,3 +19,4 @@ q2: q2.out
 
 clean:
 	rm -f q1.out
+	rm -f q2.out
