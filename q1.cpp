@@ -40,8 +40,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    printf("DEV: %s\n", dev);
-    printf("Capturing %d packets\n", MAX_PACKETS);
+    printf("\n\nInterface: %s\n", dev);
+    printf("Capturing %d packets\n\n", MAX_PACKETS);
 
     // Open the device for sniffing
     descr = pcap_open_live(dev, BUFSIZ, 0, -1, errbuf);
@@ -54,6 +54,6 @@ int main(int argc, char **argv)
     // Loop through packets and call packetHandler
     pcap_loop(descr, MAX_PACKETS, packetHandler, NULL);
 
-    printf("\nDone processing packets... wheew!\n");
+    printf("\nDone processing packets...\n");
     return 0;
 }
