@@ -15,10 +15,10 @@ int packetCount = 0;
 
 void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {  
-    printf("%d\t", ++packetCount);
+    printf("Packet No.: %d\t", ++packetCount);
     printf("Packet Length: %d\n", pkthdr->len);
     printf("Number of bytes: %d\n", pkthdr->caplen);
-    printf("Recieved time: %s\n", ctime((const time_t*)&pkthdr->ts.tv_sec));
+    printf("Recieved time: %s\n\n", ctime((const time_t*)&pkthdr->ts.tv_sec));
     fflush(stdout);
 }
 
