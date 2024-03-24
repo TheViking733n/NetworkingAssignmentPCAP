@@ -1,23 +1,59 @@
-#include <bits/stdc++.h>
+#include <pcap.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netinet/if_ether.h>
+#include <time.h>
 
-using namespace std;
 
-int main(int argc, char *argv[])
+#define MAX_PACKETS 20
+
+int packetCount = 0;
+
+void packetHandler(u_char *useless, const struct pcap_pkthdr *pkthdr, const u_char *packet)
 {
-    int n = 5;
+    printf("Packet No.: %d\n", ++packetCount);
+    printf("Packet Length: %d\n", pkthdr->len);
+    printf("Number of bytes: %d\n", pkthdr->caplen);
+    printf("Recieved time: %s\n", ctime((const time_t *)&pkthdr->ts.tv_sec));
+    fflush(stdout);
+}
 
-    vector<int> arr(n);
-    for (auto &i : arr)
+int main(int argc, char **argv)
+{
+    int i;
+    char *dev;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    pcap_t *descr;
+    const u_char *packet;
+    struct pcap_pkthdr hdr;    /* pcap.h */
+    struct ether_header *eptr; /* net/ethernet.h */
+
+    // Get the device to sniff on
+    dev = pcap_lookupdev(errbuf);
+    if (dev == NULL)
     {
-        cin >> i;
+        printf("%s\n", errbuf);
+        exit(1);
     }
-    int sm = 0;
-    for (auto i : arr)
+
+    printf("\n\nInterface: %s\n", dev);
+    printf("Capturing %d packets\n\n", MAX_PACKETS);
+
+    // Open the device for sniffing
+    descr = pcap_open_live(dev, BUFSIZ, 0, -1, errbuf);
+    if (descr == NULL)
     {
-        sm += i;
+        printf("pcap_open_live(): %s\n", errbuf);
+        exit(1);
     }
 
-    cout << sm << endl;
+    // Loop through packets and call packetHandler
+    pcap_loop(descr, MAX_PACKETS, packetHandler, NULL);
 
+    printf("\nDone processing packets...\n");
     return 0;
 }
