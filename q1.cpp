@@ -8,46 +8,54 @@
 #include <netinet/if_ether.h>
 #include <time.h>
 
-/* callback function that is passed to pcap_loop(..) and called each time 
+/* callback function that is passed to pcap_loop(..) and called each time
  * a packet is recieved                                                    */
+
+#define MAX_PACKETS 100
 
 int packetCount = 0;
 
-void my_callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
-{  
+void my_callback(u_char *useless, const struct pcap_pkthdr *pkthdr, const u_char *packet)
+{
     printf("Packet No.: %d\t", ++packetCount);
     printf("Packet Length: %d\n", pkthdr->len);
     printf("Number of bytes: %d\n", pkthdr->caplen);
-    printf("Recieved time: %s\n\n", ctime((const time_t*)&pkthdr->ts.tv_sec));
+    printf("Recieved time: %s\n\n", ctime((const time_t *)&pkthdr->ts.tv_sec));
     fflush(stdout);
 }
 
-int main(int argc,char **argv)
-{ 
+int main(int argc, char **argv)
+{
     int i;
-    char *dev; 
+    char *dev;
     char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_t* descr;
+    pcap_t *descr;
     const u_char *packet;
-    struct pcap_pkthdr hdr;     /* pcap.h */
-    struct ether_header *eptr;  /* net/ethernet.h */
+    struct pcap_pkthdr hdr;    /* pcap.h */
+    struct ether_header *eptr; /* net/ethernet.h */
 
-    if(argc != 2){ fprintf(stdout,"Usage: %s numpackets\n",argv[0]);return 0;}
+    // if(argc != 2){ fprintf(stdout,"Usage: %s numpackets\n",argv[0]);return 0;}
 
     /* grab a device to peak into... */
     dev = pcap_lookupdev(errbuf);
-    if(dev == NULL)
-    { printf("%s\n",errbuf); exit(1); }
+    if (dev == NULL)
+    {
+        printf("%s\n", errbuf);
+        exit(1);
+    }
     /* open device for reading */
-    descr = pcap_open_live(dev,BUFSIZ,0,-1,errbuf);
-    if(descr == NULL)
-    { printf("pcap_open_live(): %s\n",errbuf); exit(1); }
+    descr = pcap_open_live(dev, BUFSIZ, 0, -1, errbuf);
+    if (descr == NULL)
+    {
+        printf("pcap_open_live(): %s\n", errbuf);
+        exit(1);
+    }
 
     /* allright here we call pcap_loop(..) and pass in our callback function */
     /* int pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user)*/
     /* If you are wondering what the user argument is all about, so am I!!   */
-    pcap_loop(descr,atoi(argv[1]),my_callback,NULL);
+    pcap_loop(descr, MAX_PACKETS, my_callback, NULL);
 
-    fprintf(stdout,"\nDone processing packets... wheew!\n");
+    fprintf(stdout, "\nDone processing packets... wheew!\n");
     return 0;
 }
