@@ -9,7 +9,7 @@
 #include <time.h>
 
 
-#define MAX_PACKETS 100
+#define MAX_PACKETS 20
 
 int packetCount = 0;
 
@@ -39,6 +39,9 @@ int main(int argc, char **argv)
         printf("%s\n", errbuf);
         exit(1);
     }
+
+    printf("DEV: %s\n", dev);
+    printf("Capturing %d packets\n", MAX_PACKETS);
 
     // Open the device for sniffing
     descr = pcap_open_live(dev, BUFSIZ, 0, -1, errbuf);
