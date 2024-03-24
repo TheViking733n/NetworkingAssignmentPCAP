@@ -16,15 +16,15 @@ make
 # Execution
 > To run q1.cpp
 ```bash
-./q1
+make q1
 ```
 
 > To run q2.cpp
 ```bash
-./q2
+make q2
 ```
 
 > To run q3.cpp
 ```bash
-./q3
+make q3
 ```
