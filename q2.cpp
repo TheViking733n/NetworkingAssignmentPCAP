@@ -11,10 +11,13 @@
 #include <netinet/if_ether.h>
 #include <time.h>
 #include <netinet/ether.h>
+#include <string.h>
 
-#define MAX_PACKETS 20
+#define MAX_PACKETS 200
 
 int packetCount = 0;
+char PROTOCOL_NAME[16];
+int filteredPacketCount = 0;
 
 void packetHandler(u_char *useless, const struct pcap_pkthdr *pkthdr, const u_char *packet)
 {
@@ -23,6 +26,7 @@ void packetHandler(u_char *useless, const struct pcap_pkthdr *pkthdr, const u_ch
     eptr = (struct ether_header *)packet;
     int ether_type = ntohs(eptr->ether_type);
 
+    int ok = false;
 
     // Check if the packet is an IP packet
     if (ether_type == ETHERTYPE_IP) {
@@ -32,25 +36,46 @@ void packetHandler(u_char *useless, const struct pcap_pkthdr *pkthdr, const u_ch
         if (protocol == IPPROTO_UDP) {
             // Get the UDP header
             struct udphdr *udph = (struct udphdr *)(packet + sizeof(struct ether_header) + sizeof(struct iphdr));
-            printf("Source port: %d\n", ntohs(udph->source));
-            printf("Destination port: %d\n", ntohs(udph->dest));
             if (ntohs(udph->dest) == 67) {
+                if (strcmp(PROTOCOL_NAME, "DHCP") == 0) {
+                    ok = true;
+                    filteredPacketCount++;
+                } else {
+                    return;
+                }
                 printf("DHCP packet\n");
+            }
+            if (ok) {
+                printf("Source port: %d\n", ntohs(udph->source));
+                printf("Destination port: %d\n", ntohs(udph->dest));
             }
         }
 
-        if (protocol == IPPROTO_TCP) {
+        else if (protocol == IPPROTO_TCP) {
             // Get the TCP header
             struct tcphdr *tcph = (struct tcphdr *)(packet + sizeof(struct ether_header) + sizeof(struct iphdr));
+            if (strcmp(PROTOCOL_NAME, "TCP") == 0) {
+                ok = true;
+                filteredPacketCount++;
+            } else {
+                return;
+            }
+            printf("TCP packet\n");
             printf("Source port: %d\n", ntohs(tcph->source));
             printf("Destination port: %d\n", ntohs(tcph->dest));
-            printf("TCP packet\n");
         }
 
-        if (protocol == IPPROTO_ICMP) {
+        else if (protocol == IPPROTO_ICMP) {
+            if (strcmp(PROTOCOL_NAME, "ICMP") == 0) {
+                ok = true;
+                filteredPacketCount++;
+            } else {
+                return;
+            }
             printf("ICMP packet\n");
         }
 
+        if (!ok) return;
 
         // Print IP addresses
         struct in_addr src, dest;
@@ -61,7 +86,7 @@ void packetHandler(u_char *useless, const struct pcap_pkthdr *pkthdr, const u_ch
     }
 
     
-
+    if (!ok) return;
 
 
     // Print packet information
@@ -106,6 +131,30 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    printf("Enter the type of protocol to sniff:\n");
+    printf("1. DHCP\n");
+    printf("2. ICMP\n");
+    printf("3. TCP\n");
+    printf("Enter your choice: ");
+    int choice;
+    scanf("%d", &choice);
+    switch (choice)
+    {
+    case 1:
+        strcpy(PROTOCOL_NAME, "DHCP");
+        break;
+    case 2:
+        strcpy(PROTOCOL_NAME, "ICMP");
+        break;
+    case 3:
+        strcpy(PROTOCOL_NAME, "TCP");
+        break;
+    default:
+        printf("Invalid choice\n");
+        exit(1);
+    }
+
+
     printf("\n\nInterface: %s\n", dev);
     printf("Capturing %d packets\n\n", MAX_PACKETS);
 
@@ -119,6 +168,8 @@ int main(int argc, char **argv)
 
     // Loop through packets and call packetHandler
     pcap_loop(descr, MAX_PACKETS, packetHandler, NULL);
+
+    printf("\nFiltered packets: %d\n", filteredPacketCount);
 
     printf("\nDone processing packets...\n");
     return 0;
